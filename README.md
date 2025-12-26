@@ -238,11 +238,29 @@ xelatex report.tex
 - **tkinter**: Desktop GUI (optional)
 - **LaTeX/XeLaTeX**: Report generation
 
+## 🌐 Deployment
+
+The web application can be deployed to **Streamlit Cloud** (free hosting):
+
+1. Push your code to GitHub
+2. Go to [share.streamlit.io](https://share.streamlit.io)
+3. Sign in with GitHub
+4. Click "New app" and select your repository
+5. Set main file to `app.py`
+6. Click "Deploy"
+
+Your app will be live at `https://your-app-name.streamlit.app`
+
+See [DEPLOY.md](DEPLOY.md) for detailed deployment instructions.
+
+**Note**: GitHub Pages only supports static sites. For Python web apps, use Streamlit Cloud or other PaaS providers (Heroku, Railway, Render).
+
 ## 📚 Documentation
 
 - [Lab1 README](Lab1/README.md) - Detailed Lab 1 documentation
 - [Lab2 README](Lab2/README.md) - Detailed Lab 2 documentation
 - [Web Interface Guide](WEB_README.md) - Streamlit app usage
+- [Deployment Guide](DEPLOY.md) - How to deploy to Streamlit Cloud
 
 ## 🎯 Features
 

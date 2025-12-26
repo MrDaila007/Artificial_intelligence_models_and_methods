@@ -220,8 +220,9 @@ __marimo__/
 # Test data (optional - uncomment if you don't want to commit test data)
 # data/*.csv
 
-# Streamlit cache
-.streamlit/
+# Streamlit cache (but keep config.toml)
+.streamlit/cache/
+.streamlit/secrets.toml
 
 # OS files
 .DS_Store
