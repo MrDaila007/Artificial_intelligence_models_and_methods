@@ -1,0 +1,308 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setdefaultlanguage{russian}
+\setotherlanguage{english}
+% Используем системные шрифты с поддержкой кириллицы
+\setmainfont{Liberation Serif}[Ligatures=TeX]
+\setsansfont{Liberation Sans}[Ligatures=TeX]
+\setmonofont{Liberation Mono}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{booktabs}
+
+\geometry{margin=2.5cm}
+
+% Настройка листингов кода
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    stringstyle=\color{red},
+    commentstyle=\color{green!50!black},
+    numbers=left,
+    numberstyle=\tiny,
+    frame=single,
+    breaklines=true,
+}
+
+\title{Лабораторная работа №2\\Задача распознавания образов с обучением}
+\author{Елисеев Данила, 2025, ИС}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Теоретическая часть}
+
+\subsection{Разбиение выборки на обучающую и контрольную части}
+
+Выборка $X^0$ разбивается на две части:
+\begin{itemize}
+    \item $X^0_{\text{обуч}}$ --- обучающая выборка
+    \item $X^0_{\text{контр}}$ --- контрольная выборка
+\end{itemize}
+
+Условия разбиения:
+\begin{equation}
+X^0_i(\text{о}) \triangleq X^0_{\text{обуч}} \cap X^0_i \neq \emptyset \quad \forall i \in \{1, \ldots, l\}
+\label{eq:train_cond}
+\end{equation}
+\begin{equation}
+X^0_i(\text{к}) \triangleq X^0_{\text{контр}} \cap X^0_i \neq \emptyset \quad \forall i \in \{1, \ldots, l\}
+\label{eq:test_cond}
+\end{equation}
+
+\textbf{Ограничение:} $t_i / m_i \geq 0.2$, где $m_i = |X^0_i(\text{о})|$, $t_i = |X^0_i(\text{к})|$.
+
+\subsection{Алгоритм распознавания $A$}
+
+\subsubsection{Шаг 1: Функция попарного сравнения объектов}
+
+\begin{equation}
+s: X \times X \rightarrow \mathbb{R}
+\label{eq:distance_func}
+\end{equation}
+
+\textbf{Метрика Евклида} (для $X \subseteq \mathbb{R}^n$):
+\begin{equation}
+s(x_1, x_2) = \sqrt{\sum_{i=1}^{n} (x_{1i} - x_{2i})^2}
+\label{eq:euclidean}
+\end{equation}
+
+\textbf{Метрика Минковского} ($p \in \mathbb{N}$):
+\begin{equation}
+s(x_1, x_2) = \left( \sum_{i=1}^{n} |x_{1i} - x_{2i}|^p \right)^{1/p}
+\label{eq:minkowski}
+\end{equation}
+
+\textbf{Метрика Хэмминга} (для $X \subseteq \mathbb{B}^n$):
+\begin{equation}
+s(x_1, x_2) = \sum_{i=1}^{n} |x_{1i} - x_{2i}|
+\label{eq:hamming}
+\end{equation}
+
+\subsubsection{Шаг 2: Функция сравнения с классами}
+
+\begin{equation}
+f_i: \mathbb{R}^m \rightarrow \mathbb{R}, \quad i \in \{1, \ldots, l\}
+\label{eq:class_func}
+\end{equation}
+
+\textbf{Среднее расстояние до класса $X_i$:}
+\begin{equation}
+f_i(x) = (m_i)^{-1} \sum_{x_j \in X^0_i(\text{о})} s(x, x_j)
+\label{eq:mean_dist}
+\end{equation}
+
+\textbf{$k$ ближайших соседей:}
+\begin{equation}
+f_i(x) = (k)^{-1} \sum_{x_j \in \bar{X}^0_i(\text{о})} s(x, x_j)
+\label{eq:knn}
+\end{equation}
+
+\textbf{Минимальное расстояние:}
+\begin{equation}
+f_i(x) = \min_{x_j \in X^0_i(\text{о})} s(x, x_j)
+\label{eq:min_dist}
+\end{equation}
+
+\subsubsection{Шаг 3: Решающее правило}
+
+\begin{equation}
+P^A: \mathbb{R}^l \rightarrow \mathbb{B}^l_2, \quad \mathbb{B}_2 = \{0, 1\}
+\label{eq:decision_rule}
+\end{equation}
+
+По минимуму оценки до класса $X_i$:
+\begin{equation}
+P^A_i(x) = \begin{cases}
+1, & \text{если } f_i(x) = \min_{j \in \{1, \ldots, l\}} f_j(x) \\
+0, & \text{в противном случае}
+\end{cases}
+\label{eq:classification}
+\end{equation}
+
+\subsection{Функционал качества}
+
+Тестирование алгоритма на контрольной выборке:
+\begin{equation}
+\Phi^A(X^0_{\text{контр}}) = \frac{t^0(X^0_{\text{контр}})}{t} \in [0, 1]
+\label{eq:quality}
+\end{equation}
+где $t^0$ --- число правильно классифицированных объектов, $t$ --- общее число объектов в контрольной выборке.
+
+\section{Описание эксперимента}
+
+\subsection{Генерация данных}
+
+Для тестирования алгоритма были сгенерированы синтетические данные, состоящие из 3 классов по 50 объектов в каждом. Каждый объект описывается 4 признаками. Классы сформированы с помощью нормального распределения:
+
+\begin{itemize}
+\item Класс 1: $\mathcal{N}((0, 0, 0, 0)^\top, \mathbf{I})$
+\item Класс 2: $\mathcal{N}((3, 3, 3, 3)^\top, \mathbf{I})$
+\item Класс 3: $\mathcal{N}((0, 3, 0, 3)^\top, \mathbf{I})$
+\end{itemize}
+
+Параметры выборки:
+\begin{itemize}
+\item Размер выборки $|X^0| = 150$ объектов
+\item Число признаков: 4
+\item Число классов $l = 3$
+\end{itemize}
+
+\subsection{Разбиение выборки}
+
+Выборка была разбита на обучающую и контрольную части в соотношении 80\%/20\% с использованием стратифицированной выборки (сохранение пропорций классов).
+
+\begin{itemize}
+\item Размер обучающей выборки: $|X^0_{\text{обуч}}| = 120$ объектов
+\item Размер контрольной выборки: $|X^0_{\text{контр}}| = 30$ объектов
+\end{itemize}
+
+\section{Результаты}
+
+\subsection{Параметры разбиения выборки}
+
+\begin{table}[H]
+\centering
+\caption{Параметры разбиения выборки}
+\label{tab:split}
+\begin{tabular}{@{}cccc@{}}
+\toprule
+Класс $i$ & $m_i$ & $t_i$ & $t_i / m_i$ \\
+\midrule
+1 & 40 & 10 & 0.25 \\
+2 & 40 & 10 & 0.25 \\
+3 & 40 & 10 & 0.25 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Ограничение $t_i / m_i \geq 0.2$ выполнено для всех классов.
+
+\subsection{Результаты тестирования алгоритмов}
+
+\begin{table}[H]
+\centering
+\caption{Функционал качества $\Phi^A$ для различных комбинаций}
+\label{tab:results}
+\begin{tabular}{@{}llc@{}}
+\toprule
+Метрика & Функция сравнения & $\Phi^A$ \\
+\midrule
+Евклида & Среднее расстояние & \textbf{0.9667} \\
+Евклида & $k$ ближайших соседей ($k=3$) & 0.9000 \\
+Евклида & Минимальное расстояние & 0.9000 \\
+Минковского ($p=2$) & Среднее расстояние & \textbf{0.9667} \\
+Хэмминга & Среднее расстояние & \textbf{0.9667} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Сравнительный анализ}
+
+Результаты эксперимента показывают:
+
+\begin{enumerate}
+\item Лучший результат ($\Phi^A = 0.9667$) достигнут при использовании функции среднего расстояния до класса с метриками Евклида, Минковского и Хэмминга.
+
+\item Метод $k$ ближайших соседей и метод минимального расстояния показали одинаковый результат ($\Phi^A = 0.9000$), что на 6.67\% ниже лучшего результата.
+
+\item Для данного набора данных выбор метрики расстояния (при использовании среднего расстояния) не влияет на качество классификации.
+
+\item Из 30 объектов контрольной выборки 29 были классифицированы правильно (при использовании лучшей комбинации).
+\end{enumerate}
+
+\section{Выводы}
+
+В ходе выполнения лабораторной работы были получены следующие результаты:
+
+\begin{enumerate}
+\item Реализован алгоритм распознавания образов с обучением, включающий:
+\begin{itemize}
+    \item три метрики расстояния (Евклида, Минковского, Хэмминга);
+    \item три функции сравнения с классами (среднее расстояние, $k$ ближайших соседей, минимальное расстояние);
+    \item решающее правило по минимуму оценки до класса.
+\end{itemize}
+
+\item Лучшая комбинация (метрика Евклида + среднее расстояние) достигла функционала качества $\Phi^A = 0.9667$, что соответствует 29 правильно классифицированным объектам из 30.
+
+\item Функция среднего расстояния до класса показала лучшие результаты по сравнению с методом $k$ ближайших соседей и методом минимального расстояния.
+
+\item Результаты распознавания с обучением ($\Phi^A = 0.9667$) сопоставимы с результатами кластеризации без обучения ($\mu = 0.0111$), что свидетельствует о хорошей разделимости классов в исходных данных.
+
+\item Реализован графический интерфейс пользователя с возможностью загрузки данных, выбора параметров алгоритма и визуализации результатов.
+\end{enumerate}
+
+\section{Приложение: Код на Python}
+
+\begin{lstlisting}[basicstyle=\tiny, breaklines=true, breakatwhitespace=true]
+# -*- coding: utf-8 -*-
+"""
+Лабораторная работа №2
+Задача распознавания образов с обучением
+"""
+
+import numpy as np
+from sklearn.model_selection import train_test_split
+
+def euclidean_distance(x1, x2):
+    """Метрика Евклида"""
+    return np.sqrt(np.sum((x1 - x2) ** 2))
+
+def mean_distance_to_class(x, X_class, distance_func):
+    """Среднее расстояние до класса"""
+    distances = [distance_func(x, x_j) for x_j in X_class]
+    return np.mean(distances)
+
+class PatternRecognitionClassifier:
+    def __init__(self, distance_metric='euclidean', comparison_func='mean', k=3):
+        self.distance_metric = distance_metric
+        self.comparison_func = comparison_func
+        self.k = k
+        self.classes = {}
+        
+    def fit(self, X_train, y_train):
+        self.class_labels = np.unique(y_train)
+        for label in self.class_labels:
+            self.classes[label] = X_train[y_train == label]
+        return self
+    
+    def predict(self, X_test):
+        predictions = []
+        for x in X_test:
+            f_values = [mean_distance_to_class(x, self.classes[label], 
+                        euclidean_distance) for label in self.class_labels]
+            predictions.append(self.class_labels[np.argmin(f_values)])
+        return np.array(predictions)
+    
+    def score(self, X_test, y_test):
+        predictions = self.predict(X_test)
+        return np.sum(predictions == y_test) / len(y_test)
+
+# Генерация тестовых данных
+np.random.seed(42)
+class1 = np.random.randn(50, 4) + np.array([0, 0, 0, 0])
+class2 = np.random.randn(50, 4) + np.array([3, 3, 3, 3])
+class3 = np.random.randn(50, 4) + np.array([0, 3, 0, 3])
+X = np.vstack([class1, class2, class3])
+y = np.array([1]*50 + [2]*50 + [3]*50)
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y)
+
+clf = PatternRecognitionClassifier()
+clf.fit(X_train, y_train)
+print(f"Функционал качества Phi^A: {clf.score(X_test, y_test):.4f}")
+\end{lstlisting}
+
+\end{document}
